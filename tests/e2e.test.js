@@ -56,6 +56,12 @@ const CLOSE_BOTTOM = (name) => `(function(){var b=${BOTTOM_BAR};if(!b)return;` +
   `else if(typeof b.close==='function')b.close();` +
   `else if(typeof b.hide==='function')b.hide();})()`;
 const REPLAY_API = 'window.TradingViewApi._replayApi';
+// _replayApi stays null until TradingViewApi.replayApi() is called (see src/connection.js).
+const REPLAY_API_INIT = `(function() {
+  var api = window.TradingViewApi;
+  if (!api || api._replayApi || typeof api.replayApi !== 'function') return false;
+  return api.replayApi().then(function() { return true; });
+})()`;
 
 /** Unwrap TradingView WatchedValue objects */
 function wv(path) {
@@ -123,6 +129,7 @@ describe('TradingView MCP — Full E2E (70 tools)', () => {
     it('tv_discover — report available API paths', async () => {
       const chartApi = await apiExists(CHART_API);
       const bwb = await apiExists(BOTTOM_BAR);
+      await evaluate(REPLAY_API_INIT);
       const replay = await apiExists(REPLAY_API);
       assert.ok(chartApi, 'Chart API available');
       assert.ok(bwb, 'bottomWidgetBar available');
@@ -1156,6 +1163,10 @@ val = array.get(a, 5)`;
   // ─── 7. REPLAY MODE (6 tools) ─────────────────────────────────────────
 
   describe('Replay Mode', () => {
+
+    before(async () => {
+      await evaluate(REPLAY_API_INIT);
+    });
 
     after(async () => {
       // Ensure replay is stopped

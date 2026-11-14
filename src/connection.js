@@ -162,8 +162,8 @@ export async function disconnect() {
 // Each returns the STRING expression path after verifying it exists.
 // Callers use the returned string in their own evaluate() calls.
 
-async function verifyAndReturn(path, name) {
-  const exists = await evaluate(`typeof (${path}) !== 'undefined' && (${path}) !== null`);
+async function verifyAndReturn(path, name, evalFn = evaluate) {
+  const exists = await evalFn(`typeof (${path}) !== 'undefined' && (${path}) !== null`);
   if (!exists) {
     throw new Error(`${name} not available at ${path}`);
   }
@@ -182,8 +182,21 @@ export async function getBottomBar() {
   return verifyAndReturn(KNOWN_PATHS.bottomWidgetBar, 'Bottom Widget Bar');
 }
 
-export async function getReplayApi() {
-  return verifyAndReturn(KNOWN_PATHS.replayApi, 'Replay API');
+// TradingView initializes _replayApi lazily: it stays null after page load
+// (even while the user is in replay mode via the UI) until
+// TradingViewApi.replayApi() is called. That call returns a Promise and
+// assigns _replayApi to the resolved object. It neither starts replay nor
+// shows the replay toolbar.
+export const REPLAY_API_INIT_EXPR = `(function() {
+  var api = window.TradingViewApi;
+  if (!api || api._replayApi || typeof api.replayApi !== 'function') return false;
+  return api.replayApi().then(function() { return true; });
+})()`;
+
+export async function getReplayApi({ _deps } = {}) {
+  const evalFn = _deps?.evaluate || evaluate;
+  await evalFn(REPLAY_API_INIT_EXPR, { awaitPromise: true });
+  return verifyAndReturn(KNOWN_PATHS.replayApi, 'Replay API', evalFn);
 }
 
 export async function getMainSeriesBars() {
