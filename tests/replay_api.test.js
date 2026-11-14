@@ -1,7 +1,5 @@
 /**
  * Tests for getReplayApi() lazy initialization in src/connection.js.
- * TradingView keeps window.TradingViewApi._replayApi null until
- * TradingViewApi.replayApi() is called.
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -68,7 +66,7 @@ describe('REPLAY_API_INIT_EXPR', () => {
     assert.equal(calls, 0);
   });
 
-  it('returns false when replayApi() does not exist (older TradingView builds)', () => {
+  it('returns false when replayApi() does not exist', () => {
     assert.equal(run({ TradingViewApi: { _replayApi: null } }), false);
   });
 

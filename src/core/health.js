@@ -192,7 +192,6 @@ export async function uiState() {
       try {
         var replay = window.TradingViewApi._replayApi;
         function unwrap(v) { return (v && typeof v === 'object' && typeof v.value === 'function') ? v.value() : v; }
-        // Not initialized until TradingViewApi.replayApi() is called; report that instead of throwing.
         ui.replay = replay
           ? { initialized: true, available: unwrap(replay.isReplayAvailable()), started: unwrap(replay.isReplayStarted()) }
           : { initialized: false };

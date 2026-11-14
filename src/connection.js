@@ -182,11 +182,8 @@ export async function getBottomBar() {
   return verifyAndReturn(KNOWN_PATHS.bottomWidgetBar, 'Bottom Widget Bar');
 }
 
-// TradingView initializes _replayApi lazily: it stays null after page load
-// (even while the user is in replay mode via the UI) until
-// TradingViewApi.replayApi() is called. That call returns a Promise and
-// assigns _replayApi to the resolved object. It neither starts replay nor
-// shows the replay toolbar.
+// _replayApi stays null until TradingViewApi.replayApi() (async) is called,
+// which assigns it.
 export const REPLAY_API_INIT_EXPR = `(function() {
   var api = window.TradingViewApi;
   if (!api || api._replayApi || typeof api.replayApi !== 'function') return false;
