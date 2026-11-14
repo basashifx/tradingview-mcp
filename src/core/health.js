@@ -112,7 +112,9 @@ export async function discover() {
       } catch(e) { results.bottomWidgetBar = { available: false, error: e.message }; }
       try {
         var replay = window.TradingViewApi._replayApi;
-        results.replayApi = { available: !!replay, path: 'window.TradingViewApi._replayApi' };
+        // _replayApi is lazily initialized by TradingViewApi.replayApi(); this read-only probe does not initialize it.
+        var lazyInit = !replay && typeof window.TradingViewApi.replayApi === 'function';
+        results.replayApi = { available: !!replay || lazyInit, initialized: !!replay, path: 'window.TradingViewApi._replayApi' };
       } catch(e) { results.replayApi = { available: false, error: e.message }; }
       try {
         var alerts = window.TradingViewApi._alertService;
@@ -190,7 +192,9 @@ export async function uiState() {
       try {
         var replay = window.TradingViewApi._replayApi;
         function unwrap(v) { return (v && typeof v === 'object' && typeof v.value === 'function') ? v.value() : v; }
-        ui.replay = { available: unwrap(replay.isReplayAvailable()), started: unwrap(replay.isReplayStarted()) };
+        ui.replay = replay
+          ? { initialized: true, available: unwrap(replay.isReplayAvailable()), started: unwrap(replay.isReplayStarted()) }
+          : { initialized: false };
       } catch(e) { ui.replay = { error: e.message }; }
       return ui;
     })()
